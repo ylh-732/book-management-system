@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Books</title>
+    <style>
+        body {
+            font-family: 'Merriweather', sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+
+<div id="app">
+    <el-form :inline="true" :model="queryData" class="demo-form-inline">
+        <el-form-item>
+            <el-input v-model="queryData.name" placeholder="Title of book"></el-input>
+        </el-form-item>
+
+        <el-form-item>
+            <el-input v-model="queryData.author" placeholder="Author"></el-input>
+        </el-form-item>
+
+        <el-form-item>
+            <el-button plain @click="handleQuery">Query</el-button>
+        </el-form-item>
+    </el-form>
+
+    <el-button plain @click="handleCreate">Create</el-button><br>
+
+    <el-dialog
+            title="Create a book"
+            :visible.sync="dialogFormVisibleAdd"
+            width="35%">
+
+        <el-form ref="dataAddform" :model="formData" label-width="120px">
+            <el-form-item label="Author">
+                <el-input v-model="formData.author"></el-input>
+            </el-form-item>
+
+            <el-form-item label="Title">
+                <el-input v-model="formData.name"></el-input>
+            </el-form-item>
+
+            <el-form-item label="Description">
+                <el-input type="textarea" v-model="formData.description"></el-input>
+            </el-form-item>
+
+            <el-form-item>
+                <el-button plain @click="addData">Submit</el-button>
+                <el-button plain @click="dialogFormVisibleAdd=false">Cancel</el-button>
+            </el-form-item>
+
+        </el-form>
+    </el-dialog>
+
+    <el-dialog
+            title="Edit a book"
+            :visible.sync="dialogFormVisibleUpdate"
+            width="35%">
+
+        <el-form ref="dataUpdateform" :model="formData" label-width="120px">
+            <el-form-item label="Author">
+                <el-input v-model="formData.author"></el-input>
+            </el-form-item>
+
+            <el-form-item label="Title">
+                <el-input v-model="formData.name"></el-input>
+            </el-form-item>
+
+            <el-form-item label="Description">
+                <el-input type="textarea" v-model="formData.description"></el-input>
+            </el-form-item>
+
+            <el-form-item>
+                <el-button plain @click="updateData">Submit</el-button>
+                <el-button plain @click="dialogFormVisibleUpdate=false">Cancel</el-button>
+            </el-form-item>
+
+        </el-form>
+    </el-dialog>
+
+
+    <el-table
+            :data="tableData"
+            style="width: 100%">
+
+        <el-table-column
+                type="index"
+                width="50">
+        </el-table-column>
+        <el-table-column
+                prop="author"
+                label="Author"></el-table-column>
+        <el-table-column
+                prop="name"
+                label="Title">
+        </el-table-column>
+        <el-table-column
+                prop="description"
+                label="Description">
+        </el-table-column>
+        <el-table-column label="Operations">
+
+            <template slot-scope="scope">
+                <el-button plain @click="handleUpdate(scope.row)">Edit</el-button>
+                <el-button plain @click="handleDelete(scope.row)">Delete</el-button>
+            </template>
+
+        </el-table-column>
+    </el-table>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/vue@2/dist/vue.js"></script>
+<script src="https://unpkg.com/element-ui/lib/index.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+<script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+
+<script>
+    new Vue({
+        el:'#app',
+        data() {
+            return {
+                queryString:'',
+                tableData: [],
+                formData: {},
+                queryData: {},
+                dialogFormVisibleAdd: false,
+                dialogFormVisibleUpdate: false,
+
+            }
+        },
+
+        mounted() {
+            this.getAll();
+        },
+
+        methods:{
+
+            getAll() {
+                axios({
+                    method: "get",
+                    url: "http://47.93.39.109:80/books",
+                }).then((resp)=> {
+                    this.tableData = resp.data.data;
+                })
+            },
+
+            handleQuery() {
+                axios({
+                    method: "post",
+                    url: "http://47.93.39.109:80/books/get",
+                    data: this.queryData
+                }).then((resp)=> {
+                    this.tableData = resp.data.data;
+                })
+            },
+
+            handleCreate() {
+                this.dialogFormVisibleAdd = true;
+                this.resetForm();
+            },
+
+            resetForm() {
+                this.formData = {}
+            },
+
+            addData() {
+                axios({
+                    method: "post",
+                    url: "http://47.93.39.109:80/books",
+                    data: this.formData
+                }).then((resp)=> {
+                    if (resp.data.code == 20011){
+                        this.dialogFormVisibleAdd = false;
+                        this.$message.success("success")
+                    } else {
+                        this.$message.error("error")
+                    }
+                }).finally(()=>{
+                    this.getAll();
+                })
+            },
+
+            handleUpdate(row) {
+                axios({
+                    method: "get",
+                    url: "http://47.93.39.109:80/books/" + row.id,
+                }).then((resp)=> {
+                    this.formData = resp.data.data;
+                    this.dialogFormVisibleUpdate = true;
+                })
+            },
+
+            updateData(row) {
+                axios({
+                    method: "put",
+                    url: "http://47.93.39.109:80/books/",
+                    data: this.formData
+                }).then((resp)=> {
+                    this.$message.success("success")
+                    this.dialogFormVisibleUpdate = false;
+                    this.getAll()
+                })
+            },
+
+            handleDelete(row) {
+                this.$confirm('This will permanently delete the file. Continue?', 'Warning', {
+                    confirmButtonText: 'OK',
+                    cancelButtonText: 'Cancel',
+                    type: 'warning'
+                }).then(() => {
+                    axios({
+                        method: "delete",
+                        url: "http://47.93.39.109:80/books/" + row.id,
+                    }).then((resp)=> {
+                        this.getAll();
+                    })
+                }).catch(() => {
+                    this.$message({
+                        type: 'info',
+                        message: 'Delete canceled'
+                    });
+                });
+            }
+        },
+    })
+
+</script>
+
+</body>
+
+</html>

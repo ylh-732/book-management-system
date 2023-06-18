@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.ylh.mapper.BookMapper">
+
+    <insert id="add">
+        INSERT INTO book_table (author, name, description)
+        VALUES (#{author}, #{name}, #{description})
+    </insert>
+
+    <update id="update">
+        UPDATE book_table
+        SET author = #{author}, name = #{name}, description = #{description}
+        WHERE id = #{id}
+    </update>
+
+    <delete id="deleteById">
+        DELETE FROM book_table
+        WHERE id = #{id}
+    </delete>
+
+    <select id="getById" resultType="com.ylh.pojo.Book">
+        SELECT * FROM book_table
+        WHERE id = #{id}
+    </select>
+
+    <select id="getAll" resultType="com.ylh.pojo.Book">
+        SELECT * FROM book_table
+    </select>
+
+    <select id="getByCondition" resultType="com.ylh.pojo.Book">
+        SELECT * FROM book_table
+        <where>
+            <if test="name != null and name != '' ">
+                and name like #{name}
+            </if>
+
+            <if test="author != null and author != '' ">
+                and author like #{author}
+            </if>
+        </where>
+    </select>
+
+</mapper>
